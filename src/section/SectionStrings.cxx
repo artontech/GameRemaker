@@ -10,7 +10,7 @@ uint32_t SectionStrings::calcSize(GMFile* gmf, uint32_t offset) {
 	}
 
 	// alignment to 128
-	uint32_t align = 128 - ((offset + 8 + header.size) % 128);
+	uint32_t align = 128 - ((offset + header.size) % 128);
 	header.size += align;
 
 	return header.size;

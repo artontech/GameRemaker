@@ -26,6 +26,10 @@ Section* GMFile::newSection(HeaderName name) {
 		section = new SectionStrings();
 		break;
 	}
+	case HEADER_TEXTURES: {
+		section = new SectionTextures();
+		break;
+	}
 	default:
 		section = new SectionUnknown();
 		break;
@@ -44,18 +48,18 @@ bool GMFile::fromFile(string input) {
 
 	fread(&form, sizeof(Header), 1, f);
 	assert(form.name == HEADER_FORM);
-	uint32_t total_size = 8 + form.size;
+	uint32_t total_size = sizeof(Header) + form.size;
 
-	uint32_t offset = 8;
+	uint32_t offset = sizeof(Header);
 
 	while (offset < total_size) {
 		fseek(f, offset, 0);
 		Header header;
 		fread(&header, sizeof(Header), 1, f);
-		offset += 8;
+		offset += sizeof(Header);
 
 		Section* section = newSection(header.name);
-		section->fromFile(this, header, f, offset);
+		if (!section->fromFile(this, header, f, offset)) return false;
 		sections.push_back(section);
 
 		cout << "Offset: " << offset << ", " << section->toString() << endl;
@@ -106,7 +110,7 @@ bool GMFile::fromDir(string input) {
 		string section_path = Util::join(input, header.getName());
 
 		Section* section = newSection(header.name);
-		section->fromDir(this, header, section_path);
+		if (!section->fromDir(this, header, section_path)) return false;
 		sections.push_back(section);
 
 		cout << section->toString() << endl;
@@ -126,24 +130,29 @@ bool GMFile::toFile(string output) {
 
 	// Compile
 	form.size = 0;
-	uint32_t offset = 8;
+	uint32_t offset = sizeof(Header);
 	for (Section* section : sections) {
+		// For header
+		form.size += sizeof(Header);
+		offset += sizeof(Header);
+
+		// Calc size
 		uint32_t section_size = section->calcSize(this, offset);
-		form.size += 8 + section_size;
-		offset += 8 + section_size;
+		form.size += section_size;
+		offset += section_size;
 	}
 
 	// Dump to file
 	fwrite(&form, sizeof(form), 1, f);
-	offset = 8;
+	offset = sizeof(Header);
 	for (Section* section : sections) {
 		// Dump header
 		fseek(f, offset, 0);
 		fwrite(&section->header, sizeof(Header), 1, f);
-		offset += 8;
+		offset += sizeof(Header);
 
 		// Dump data
-		section->toFile(this, f, offset);
+		if (!section->toFile(this, f, offset)) return false;
 		offset += section->header.size;
 	}
 
@@ -178,7 +187,7 @@ bool GMFile::toDir(string output) {
 		filesystem::create_directory(section_path);
 
 		// Write section data to dir
-		section->toDir(this, section_path);
+		if (!section->toDir(this, section_path)) return false;
 
 		// Write to root json
 		writer.StartObject();

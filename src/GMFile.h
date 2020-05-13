@@ -73,6 +73,20 @@ public:
 	virtual bool toDir(GMFile* gmf, string section_path) const;
 };
 
+// Textures section
+class SectionTextures : public Section {
+public:
+	uint32_t count;
+	vector<uint32_t> offsets;
+	vector<PNGFile*> png_files;
+
+	virtual uint32_t calcSize(GMFile* gmf, uint32_t offset);
+	virtual bool fromFile(GMFile* gmf, Header &h, FILE* f, uint32_t offset);
+	virtual bool fromDir(GMFile* gmf, Header &h, string basepath);
+	virtual bool toFile(GMFile* gmf, FILE* f, uint32_t offset);
+	virtual bool toDir(GMFile* gmf, string section_path) const;
+};
+
 // Unknown section
 class SectionUnknown : public Section {
 public:

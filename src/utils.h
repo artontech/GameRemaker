@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <string>
 #include <direct.h>
+#include <stdint.h>
 
 using namespace std;
 
@@ -31,5 +32,10 @@ public:
 #endif
 
 		return path1 + separator + path2;
+	}
+
+	// Swap uint32 bytes
+	static uint32_t swap(uint32_t v) {
+		return (v & 0xFF000000) >> 24 | (v & 0x00FF0000) >> 8 | (v & 0x0000FF00) << 8 | (v & 0x000000FF) << 24;
 	}
 };

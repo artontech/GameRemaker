@@ -99,5 +99,38 @@ struct GEN8 {
 	uint32_t numberCount;
 };
 
+struct TextureEntry {
+	uint32_t _pad;
+	uint32_t padOrOffset;
+	uint32_t offset;
+};
+
+enum PNGChunkType : uint32_t {
+	PNG_CHUNK_IHDR = 0x52444849, // IHDR
+	PNG_CHUNK_SRGB = 0x42475273, // sRGB 
+	PNG_CHUNK_IEND = 0x444E4549, // IEND
+	PNG_CHUNK_GAMA = 0x414D4167, // gAMA
+	PNG_CHUNK_PHYS = 0x73594870, // pHYs
+	PNG_CHUNK_IDAT = 0x54414449, // IDAT
+};
+
+struct PNGChunk {
+	uint32_t length;
+	PNGChunkType type;
+};
+
+struct PNGHeader {
+	uint64_t _pad; // <0x89>PNG <uint length?>
+	PNGChunk chunk;
+	uint32_t width, height;
+};
+
 #pragma pack(pop)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+// PNG file
+struct PNGFile {
+	PNGHeader header;
+	uint32_t length;
+	uint8_t* data;
+};
