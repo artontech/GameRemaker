@@ -138,25 +138,21 @@ bool GMFile::fromDir(string input) {
 	assert(document["sections"].IsArray());
 	for (const auto& sec : document["sections"].GetArray()) {
 		Header header;
-		for (const auto& field : sec.GetObject()) {
-			string field_name = field.name.GetString();
 
-			if ("name" == field_name) {
-				Parser32 name;
-				name.uint32 = 0;
-				strcpy_s(name.chr, 5, field.value.GetString());
-
-				header.name = (HeaderName) name.uint32;
-			}
-		}
+		// Get name
+		Parser32 name;
+		name.uint32 = 0;
+		strcpy_s(name.chr, 5, sec["name"].GetString());
+		header.name = (HeaderName)name.uint32;
 
 		// Create section
 		string section_path = Util::join(input, header.getName());
 
 		Section* section = newSection(header.name);
 		if (!section->fromDir(this, header, section_path)) return false;
-		sections.push_back(section);
+		section->padEnd = sec["padEnd"].GetUint();
 
+		sections.push_back(section);
 		cout << string(13, '\b') << "Loading: " << section->header.getName();
 	}
 	cout << endl;
@@ -182,7 +178,8 @@ bool GMFile::toFile(string output) {
 		offset += sizeof(Header);
 
 		// Calc size
-		uint32_t section_size = section->calcSize(this, offset);
+		uint32_t section_size = section->calcSize(this, offset) + section->padEnd;
+		section->header.size = section_size;
 		form.size += section_size;
 		offset += section_size;
 	}
@@ -227,9 +224,6 @@ bool GMFile::toDir(string output) {
 	rapidjson::Writer<rapidjson::FileWriteStream> writer(os);
 	writer.StartObject();
 
-	writer.Key("size");
-	writer.Uint(form.size);
-
 	writer.Key("sections");
 	writer.StartArray();
 	for (Section* section : sections) {
@@ -244,10 +238,13 @@ bool GMFile::toDir(string output) {
 
 		// Write to root json
 		writer.StartObject();
+
 		writer.Key("name");
 		writer.String(section_name.c_str());
-		writer.Key("size");
-		writer.Uint(section->header.size);
+
+		writer.Key("padEnd");
+		writer.Uint(0);
+
 		writer.EndObject();
 	}
 	cout << endl;

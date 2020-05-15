@@ -12,6 +12,11 @@ string Header::getName() const {
 	return parser.chr;
 }
 
+// constructor
+Section::Section() {
+	this->padEnd = 0;
+}
+
 string Section::toString() const {
 	stringstream ss("name: ");
 	ss << header.getName() << ", size: " << header.size;

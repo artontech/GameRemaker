@@ -40,7 +40,9 @@ class Section {
 public:
 	uint32_t offset;
 	Header header;
+	uint32_t padEnd;
 
+	Section();
 	virtual string toString() const;
 	virtual uint32_t calcSize(GMFile* gmf, uint32_t offset) = 0;
 	virtual bool fromFile(GMFile* gmf, Header &h, FILE* f, uint32_t offset) = 0;
