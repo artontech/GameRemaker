@@ -12,7 +12,7 @@ enum HeaderName: uint32_t {
 	HEADER_LANGUAGE = 0x474E414C,		// LANG
 	HEADER_EXTENSIONS = 0x4E545845,		// EXTN
 	HEADER_SOUNDS = 0x444E4F53,			// SOND
-	HEADER_AUDIO_GROUP = 0x50524741,	// AGRP
+	HEADER_AUDIO_GROUPS = 0x50524741,	// AGRP
 	HEADER_SPRITES = 0x54525053,		// SPRT
 	HEADER_BACKGROUNDS = 0x444E4742,	// BGND
 	HEADER_PATHS = 0x48544150,			// PATH
@@ -72,7 +72,7 @@ enum InfoFlag : uint32_t {
 	FLAG_BORDERLESS_WINDOW = 0x4000
 };
 
-
+// For General
 struct GEN8 {
 	uint32_t debug : 8;
 	uint32_t byteCodeVersion : 24;
@@ -99,6 +99,7 @@ struct GEN8 {
 	uint32_t numberCount;
 };
 
+// For Texture
 struct TextureEntry {
 	uint32_t _pad;
 	uint32_t padOrOffset;
@@ -125,6 +126,26 @@ struct PNGHeader {
 	uint32_t width, height;
 };
 
+// For Sound
+enum SoundFlag : uint32_t {
+	SOUND_EMBEDDED = 0x01, // NotStreamed?
+	SOUND_COMPRESSED = 0x02,
+	SOUND_NORMAL = 0x04 | 0x20 | 0x40 // all seem to have these flags -> unimportant?
+};
+void operator|=(SoundFlag &self, const SoundFlag &f);
+
+struct SoundEntry {
+	uint32_t nameOffset;
+	SoundFlag flags;
+	uint32_t typeOffset;
+	uint32_t filenameOffset;
+	uint32_t _pad; // effects?
+	float_t volume;
+	float_t pitch;
+	int32_t groupID;
+	int32_t audioID;
+};
+
 #pragma pack(pop)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -133,4 +154,39 @@ struct PNGFile {
 	PNGHeader header;
 	uint32_t length;
 	uint8_t* data;
+};
+
+// Sound info
+struct SoundInfo {
+	SoundEntry entry;
+
+	string name;
+	int nameID;
+
+	string type;
+	int typeID;
+
+	string filename;
+	int filenameID;
+
+	string group;
+
+	bool embedded;
+	bool compressed;
+};
+
+// Audio group info
+struct AudioGroupInfo {
+	uint32_t nameOffset;
+	string name;
+	int nameID;
+};
+
+// Audio file
+struct AudioFile {
+	uint32_t length;
+	uint8_t* data;
+
+	string group;
+	string filename;
 };

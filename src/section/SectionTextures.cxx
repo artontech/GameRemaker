@@ -1,17 +1,17 @@
 #include <filesystem>
-#include <sstream>
 
 #include "GMFile.h"
 #include "utils.h"
 
 uint32_t SectionTextures::calcSize(GMFile* gmf, uint32_t offset) {
+	this->offset = offset;
+
 	// Calc size
 	uint32_t data_offset = offset + sizeof(uint32_t) + sizeof(uint32_t) * count * 3; // including offset of offsets
 
 	// Calc png file offset
 	for (PNGFile* png_file : png_files) {
-		// alignment to 128
-		data_offset += 128 - (data_offset % 128);
+		data_offset += Util::align(data_offset, 128);
 
 		offsets.push_back(data_offset); // record offset for toFile()
 
@@ -80,13 +80,13 @@ bool SectionTextures::fromFile(GMFile* gmf, Header &h, FILE* f, uint32_t offset)
 	return true;
 }
 
-bool SectionTextures::fromDir(GMFile* gmf, Header &h, string basepath) {
+bool SectionTextures::fromDir(GMFile* gmf, Header &h, string section_path) {
 	header = h;
 
 	vector<int> ids;
 
 	// Enum file
-	for (auto& fe : filesystem::directory_iterator(basepath)) {
+	for (auto& fe : filesystem::directory_iterator(section_path)) {
 		filesystem::path fp = fe.path(), fn = fp.filename();
 		if (!filesystem::is_directory(fe) && fn.extension() == ".png") {
 			ids.push_back(stoi(fn.replace_extension()));
@@ -99,7 +99,7 @@ bool SectionTextures::fromDir(GMFile* gmf, Header &h, string basepath) {
 	for (const int& i : ids) {
 		PNGFile* png_file = new PNGFile();
 
-		string data_file = Util::join(basepath, to_string(i) + ".png");
+		string data_file = Util::join(section_path, to_string(i) + ".png");
 		FILE* fp = fopen(data_file.c_str(), "rb");
 
 		fseek(fp, 0L, SEEK_END);
@@ -117,7 +117,7 @@ bool SectionTextures::fromDir(GMFile* gmf, Header &h, string basepath) {
 	return true;
 }
 
-bool SectionTextures::toFile(GMFile* gmf, FILE* f, uint32_t offset) {
+bool SectionTextures::toFile(GMFile* gmf, FILE* f) {
 	fseek(f, offset, 0);
 
 	fwrite(&count, sizeof(uint32_t), 1, f);
@@ -159,5 +159,13 @@ bool SectionTextures::toDir(GMFile* gmf, string section_path) const {
 		fclose(fp);
 	}
 
+	return true;
+}
+
+bool SectionTextures::linkFrom(GMFile* gmf) {
+	return true;
+}
+
+bool SectionTextures::linkTo(GMFile* gmf, FILE* f) {
 	return true;
 }

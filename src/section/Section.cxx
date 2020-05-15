@@ -17,3 +17,7 @@ string Section::toString() const {
 	ss << header.getName() << ", size: " << header.size;
 	return ss.str();
 }
+
+void operator|=(SoundFlag &self, const SoundFlag &f) {
+	self = (SoundFlag)(self | f);
+}

@@ -15,7 +15,7 @@ public:
 	}
 
 	// Extract parent path
-	static string basepath(const string& filepath) {
+	static string section_path(const string& filepath) {
 		size_t pos = max(filepath.find_last_of('/', 0), filepath.find_last_of('\\', 0));
 		if (pos == string::npos) return filepath;
 		return filepath.substr(0, pos + 1);
@@ -37,5 +37,10 @@ public:
 	// Swap uint32 bytes
 	static uint32_t swap(uint32_t v) {
 		return (v & 0xFF000000) >> 24 | (v & 0x00FF0000) >> 8 | (v & 0x0000FF00) << 8 | (v & 0x000000FF) << 24;
+	}
+
+	// Align
+	static uint32_t align(const uint32_t addr, const uint32_t base) {
+		return (base - (addr % base)) % base;
 	}
 };

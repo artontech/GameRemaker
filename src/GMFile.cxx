@@ -10,8 +10,29 @@
 GMFile::GMFile() {
 }
 
+Section* GMFile::getSection(const HeaderName name) {
+	for (Section* section : sections) {
+		if (name == section->header.name) {
+			return section;
+		}
+	}
+	return NULL;
+}
+
+bool GMFile::linkFrom(const HeaderName name) {
+	Section* section = getSection(name);
+	if (NULL == section) return false;
+	return section->linkFrom(this);
+}
+
+bool GMFile::linkTo(const HeaderName name, FILE* f) {
+	Section* section = getSection(name);
+	if (NULL == section) return false;
+	return section->linkTo(this, f);
+}
+
 // New scetion
-Section* GMFile::newSection(HeaderName name) {
+Section* GMFile::newSection(const HeaderName name) {
 	Section* section = NULL;
 
 	switch (name) {
@@ -30,6 +51,18 @@ Section* GMFile::newSection(HeaderName name) {
 		section = new SectionTextures();
 		break;
 	}
+	case HEADER_SOUNDS: {
+		section = new SectionSounds();
+		break;
+	}
+	case HEADER_AUDIO_GROUPS: {
+		section = new SectionAudioGroups();
+		break;
+	}
+	case HEADER_AUDIO: {
+		section = new SectionAudio();
+		break;
+	}
 	default:
 		section = new SectionUnknown();
 		break;
@@ -41,13 +74,14 @@ Section* GMFile::newSection(HeaderName name) {
 // Load GameMaker file
 bool GMFile::fromFile(string input) {
 	FILE* f = fopen(input.c_str(), "rb");
-	if (f == NULL) {
+	if (NULL == f) {
 		cout << "Failed to open: " << input << endl;
 		return false;
 	}
 
+	// Load data
 	fread(&form, sizeof(Header), 1, f);
-	assert(form.name == HEADER_FORM);
+	assert(HEADER_FORM == form.name);
 	uint32_t total_size = sizeof(Header) + form.size;
 
 	uint32_t offset = sizeof(Header);
@@ -68,6 +102,16 @@ bool GMFile::fromFile(string input) {
 	}
 
 	fclose(f);
+
+	// Link audio group name
+	linkFrom(HEADER_AUDIO_GROUPS);
+
+	// Link sounds
+	linkFrom(HEADER_SOUNDS);
+
+	// Link audio
+	linkFrom(HEADER_AUDIO);
+
 	return true;
 }
 
@@ -97,7 +141,7 @@ bool GMFile::fromDir(string input) {
 		for (const auto& field : sec.GetObject()) {
 			string field_name = field.name.GetString();
 
-			if (field_name == "name") {
+			if ("name" == field_name) {
 				Parser32 name;
 				name.uint32 = 0;
 				strcpy_s(name.chr, 5, field.value.GetString());
@@ -113,8 +157,9 @@ bool GMFile::fromDir(string input) {
 		if (!section->fromDir(this, header, section_path)) return false;
 		sections.push_back(section);
 
-		cout << section->toString() << endl;
+		cout << string(13, '\b') << "Loading: " << section->header.getName();
 	}
+	cout << endl;
 
 	fin.close();
 	return true;
@@ -123,7 +168,7 @@ bool GMFile::fromDir(string input) {
 // Pack data to file
 bool GMFile::toFile(string output) {
 	FILE* f = fopen(output.c_str(), "wb");
-	if (f == NULL) {
+	if (NULL == f) {
 		cout << "Failed to open: " << output << endl;
 		return false;
 	}
@@ -143,18 +188,24 @@ bool GMFile::toFile(string output) {
 	}
 
 	// Dump to file
+	rewind(f);
 	fwrite(&form, sizeof(form), 1, f);
-	offset = sizeof(Header);
 	for (Section* section : sections) {
+		cout << section->toString() << endl;
+
 		// Dump header
-		fseek(f, offset, 0);
+		fseek(f, section->offset - sizeof(Header), 0);
 		fwrite(&section->header, sizeof(Header), 1, f);
-		offset += sizeof(Header);
 
 		// Dump data
-		if (!section->toFile(this, f, offset)) return false;
-		offset += section->header.size;
+		if (!section->toFile(this, f)) return false;
 	}
+
+	// Link audio group name
+	linkTo(HEADER_AUDIO_GROUPS, f);
+
+	// Link sounds
+	linkTo(HEADER_SOUNDS, f);
 
 	fclose(f);
 	return true;
@@ -165,7 +216,7 @@ bool GMFile::toDir(string output) {
 	string json_file = Util::join(output, "project.json");
 
 	FILE* f = fopen(json_file.c_str(), "wb");
-	if (f == NULL) {
+	if (NULL == f) {
 		cout << "Failed to open: " << json_file << endl;
 		return false;
 	}
@@ -182,6 +233,8 @@ bool GMFile::toDir(string output) {
 	writer.Key("sections");
 	writer.StartArray();
 	for (Section* section : sections) {
+		cout << string(12, '\b') << "Saving: " << section->header.getName();
+
 		string section_name = section->header.getName();
 		string section_path = Util::join(output, section_name);
 		filesystem::create_directory(section_path);
@@ -197,6 +250,7 @@ bool GMFile::toDir(string output) {
 		writer.Uint(section->header.size);
 		writer.EndObject();
 	}
+	cout << endl;
 	writer.EndArray();
 
 	writer.EndObject();

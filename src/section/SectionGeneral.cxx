@@ -109,6 +109,8 @@ bool SectionGeneral::toJsonFile(string path) const {
 }
 
 uint32_t SectionGeneral::calcSize(GMFile* gmf, uint32_t offset) {
+	this->offset = offset;
+
 	// Calc size
 	header.size = sizeof(GEN8) + sizeof(uint32_t) * gen8.numberCount;
 	return header.size;
@@ -126,10 +128,10 @@ bool SectionGeneral::fromFile(GMFile* gmf, Header &h, FILE* f, uint32_t offset) 
 	return true;
 }
 
-bool SectionGeneral::fromDir(GMFile* gmf, Header &h, string basepath) {
+bool SectionGeneral::fromDir(GMFile* gmf, Header &h, string section_path) {
 	header = h;
 
-	string json_file = Util::join(basepath, "data.json");
+	string json_file = Util::join(section_path, "data.json");
 
 	rapidjson::Document document;
 
@@ -192,7 +194,7 @@ bool SectionGeneral::fromDir(GMFile* gmf, Header &h, string basepath) {
 	return true;
 }
 
-bool SectionGeneral::toFile(GMFile* gmf, FILE* f, uint32_t offset) {
+bool SectionGeneral::toFile(GMFile* gmf, FILE* f) {
 	fseek(f, offset, 0);
 
 	fwrite(&gen8, sizeof(GEN8), 1, f);
@@ -207,5 +209,13 @@ bool SectionGeneral::toDir(GMFile* gmf, string section_path) const {
 	string json_file = Util::join(section_path, "data.json");
 	toJsonFile(json_file);
 
+	return true;
+}
+
+bool SectionGeneral::linkFrom(GMFile* gmf) {
+	return true;
+}
+
+bool SectionGeneral::linkTo(GMFile* gmf, FILE* f) {
 	return true;
 }
