@@ -24,7 +24,7 @@ enum HeaderName: uint32_t {
 	HEADER_OBJECTS = 0x544A424F,		// OBJT
 	HEADER_ROOMS = 0x4D4F4F52,			// ROOM
 	HEADER_DATA_FILES = 0x4C464144,		// DAFL
-	HEADER_TEXTURE_PAGE = 0x47415054,	// TPAG
+	HEADER_TEXTURE_PAGES = 0x47415054,	// TPAG
 	HEADER_CODE = 0x45444F43,			// CODE
 	HEADER_VARIABLES = 0x49524156,		// VARI
 	HEADER_FUNCTIONS = 0x434E5546,		// FUNC
@@ -48,9 +48,18 @@ struct Header {
 #pragma pack(push)
 #pragma pack(1)
 
-struct Point {
+struct Point32 {
 	int32_t x;
 	int32_t y;
+};
+
+struct PointU16 {
+	uint16_t x;
+	uint16_t y;
+};
+
+struct RectU16 {
+	uint16_t x, y, width, height;
 };
 
 enum InfoFlag : uint32_t {
@@ -87,7 +96,7 @@ struct GEN8 {
 	int32_t minor;
 	int32_t release;
 	int32_t build;
-	Point windowSize;
+	Point32 windowSize;
 	InfoFlag info;
 	uint8_t md5[0x10];
 	uint32_t crc32;
@@ -146,6 +155,43 @@ struct SoundEntry {
 	int32_t audioID;
 };
 
+// For Font
+struct PointFloat {
+	float_t x, y;
+};
+
+struct FontEntry {
+	uint32_t codeName, systemName;
+	uint32_t emSize;
+	uint32_t bold;
+	uint32_t italic;
+	// renderhq? includettf? ttfname? WHERE?
+	uint16_t _unknown; // unknown
+	uint8_t charset;
+	uint8_t antiAliasing;
+	uint32_t _ignore; // ascii range end (probably, only one) -> use Chars
+	uint32_t texturePageOffset;
+
+	PointFloat scale;
+
+	uint32_t charsCount;
+};
+
+struct FontCharacter {
+	uint16_t character;
+	RectU16 texturePageFrame;
+	uint16_t shift;
+	uint32_t offset;
+};
+
+// For Texture page
+struct TexturePageInfo {
+	RectU16 src;
+	RectU16 dst;
+	PointU16 size;
+	uint16_t spriteSheetId;
+};
+
 #pragma pack(pop)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -189,4 +235,21 @@ struct AudioFile {
 
 	string group;
 	string filename;
+};
+
+// Font info
+struct FontInfo {
+	FontEntry entry;
+
+	string codeName;
+	int codeNameID;
+
+	string systemName;
+	int systemNameID;
+
+	bool isBold;
+	bool IsItalic;
+	int texturePageId;
+
+	vector<FontCharacter> characters;
 };

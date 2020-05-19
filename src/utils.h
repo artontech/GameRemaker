@@ -43,4 +43,14 @@ public:
 	static uint32_t align(const uint32_t addr, const uint32_t base) {
 		return (base - (addr % base)) % base;
 	}
+
+	static string unicodeToUTF8(const wstring &wstr) {
+		wstring_convert<codecvt_utf8<wchar_t>> wcv;
+		return wcv.to_bytes(wstr);
+	}
+
+	static wstring UTF8ToUnicode(const string &str) {
+		wstring_convert<codecvt_utf8<wchar_t>> wcv;
+		return wcv.from_bytes(str);
+	}
 };

@@ -91,8 +91,8 @@ public:
 // Textures section
 class SectionTextures : public Section {
 private:
-	vector<uint32_t> offsets;
 	uint32_t count;
+	vector<uint32_t> offsets;
 	vector<PNGFile*> png_files;
 public:
 	virtual uint32_t calcSize(GMFile* gmf, uint32_t offset);
@@ -139,8 +139,8 @@ public:
 // Audio section
 class SectionAudio : public Section {
 private:
-	vector<uint32_t> offsets;
 	uint32_t count;
+	vector<uint32_t> offsets;
 	vector<AudioFile> audio_files;
 public:
 	virtual uint32_t calcSize(GMFile* gmf, uint32_t offset);
@@ -150,6 +150,40 @@ public:
 	virtual bool toDir(GMFile* gmf, string section_path) const;
 	virtual bool linkFrom(GMFile* gmf);
 	virtual bool linkTo(GMFile* gmf, FILE* f);
+};
+
+// Fonts section
+class SectionFonts : public Section {
+private:
+	uint32_t count;
+	vector<uint32_t> offsets;
+	vector<FontInfo> infos;
+public:
+	virtual uint32_t calcSize(GMFile* gmf, uint32_t offset);
+	virtual bool fromFile(GMFile* gmf, Header &h, FILE* f, uint32_t offset);
+	virtual bool fromDir(GMFile* gmf, Header &h, string section_path);
+	virtual bool toFile(GMFile* gmf, FILE* f);
+	virtual bool toDir(GMFile* gmf, string section_path) const;
+	virtual bool linkFrom(GMFile* gmf);
+	virtual bool linkTo(GMFile* gmf, FILE* f);
+};
+
+// TexturePages section
+class SectionTexturePages : public Section {
+private:
+	uint32_t count;
+	vector<uint32_t> offsets;
+	vector<TexturePageInfo> infos;
+public:
+	virtual uint32_t calcSize(GMFile* gmf, uint32_t offset);
+	virtual bool fromFile(GMFile* gmf, Header &h, FILE* f, uint32_t offset);
+	virtual bool fromDir(GMFile* gmf, Header &h, string section_path);
+	virtual bool toFile(GMFile* gmf, FILE* f);
+	virtual bool toDir(GMFile* gmf, string section_path) const;
+	virtual bool linkFrom(GMFile* gmf);
+	virtual bool linkTo(GMFile* gmf, FILE* f);
+	bool getPageByOffset(const uint32_t offset, int& id, TexturePageInfo& info) const;
+	uint32_t getOffset(const int id) const;
 };
 
 // Unknown section

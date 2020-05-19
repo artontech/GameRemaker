@@ -63,6 +63,14 @@ Section* GMFile::newSection(const HeaderName name) {
 		section = new SectionAudio();
 		break;
 	}
+	case HEADER_FONTS: {
+		section = new SectionFonts();
+		break;
+	}
+	case HEADER_TEXTURE_PAGES: {
+		section = new SectionTexturePages();
+		break;
+	}
 	default:
 		section = new SectionUnknown();
 		break;
@@ -111,6 +119,9 @@ bool GMFile::fromFile(string input) {
 
 	// Link audio
 	linkFrom(HEADER_AUDIO);
+
+	// Link fonts
+	linkFrom(HEADER_FONTS);
 
 	return true;
 }
@@ -203,6 +214,9 @@ bool GMFile::toFile(string output) {
 
 	// Link sounds
 	linkTo(HEADER_SOUNDS, f);
+
+	// Link fonts
+	linkTo(HEADER_FONTS, f);
 
 	fclose(f);
 	return true;

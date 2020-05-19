@@ -11,6 +11,11 @@ struct Int24 {
 	uint32_t placeholder : 8;
 };
 
+union Parser16 {
+	uint16_t uint16;
+	char chr[3];
+};
+
 union Parser24 {
 	Int24 uint24;
 	char chr[4];
